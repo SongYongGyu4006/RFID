@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHER - RFID Access Statistics</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons (CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #060913;
+            --card-bg: rgba(13, 20, 38, 0.6);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --glow-cyan: rgba(0, 242, 254, 0.15);
+            --glow-blue: rgba(79, 172, 254, 0.15);
+        }
+
+        /* Light Theme 색상 정의 */
+        body.light-theme {
+            --bg-color: #f3f4f6;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --glow-cyan: rgba(0, 242, 254, 0.05);
+            --glow-blue: rgba(79, 172, 254, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Sci-Fi Ambient Glow Effects */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(79, 172, 254, 0.07) 0%, transparent 70%);
+            top: -150px;
+            right: 10%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.06) 0%, transparent 70%);
+            bottom: 50px;
+            left: 5%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Layout Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+
+        /* Header Navigation */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            color: var(--accent-cyan);
+            filter: drop-shadow(0 0 8px var(--accent-cyan));
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-cyan);
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-green);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 1.8s infinite;
+        }
+
+        /* Title Bar & Filter */
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .title-bar h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .filter-group {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 0.25rem;
+        }
+
+        body.light-theme .filter-group {
+            background: rgba(0, 0, 0, 0.02);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active {
+            background: rgba(0, 242, 254, 0.1);
+            color: var(--accent-cyan);
+        }
+
+        /* Overview Stats Cards */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 18px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .card-icon {
+            color: var(--accent-cyan);
+            background: rgba(0, 242, 254, 0.08);
+            padding: 0.4rem;
+            border-radius: 8px;
+        }
+
+        .card-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-footer {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Chart Layout Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 850px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Full Width Chart */
+        .full-chart-card {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 850px) {
+            .full-chart-card {
+                grid-column: span 1;
+            }
+        }
+
+        /* Animation */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-left">
+                <a href="index.html" class="logo">
+                    <i data-lucide="nfc" class="logo-icon" size="28"></i>
+                    <span class="logo-text">AETHER NFC</span>
+                </a>
+                <nav>
+                    <a href="index.html" class="nav-link">
+                        <i data-lucide="layout-dashboard" size="16"></i>대시보드
+                    </a>
+                    <a href="stats.html" class="nav-link active">
+                        <i data-lucide="bar-chart-3" size="16"></i>출입자 통계
+                    </a>
+                </nav>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" class="btn" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); color: var(--text-primary); padding: 0.5rem; border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; box-shadow: none; cursor: pointer; border-style: solid;" onclick="toggleTheme()">
+                    <i data-lucide="sun" id="theme-icon" size="18"></i>
+                </button>
+                <div class="system-status">
+                    <span class="status-dot"></span>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Title Bar -->
+        <div class="title-bar">
+            <h1>통계 분석</h1>
+            <div class="filter-group">
+                <button class="filter-btn active" onclick="updateFilter('today', this)">오늘</button>
+                <button class="filter-btn" onclick="updateFilter('week', this)">최근 7일</button>
+                <button class="filter-btn" onclick="updateFilter('month', this)">최근 30일</button>
+            </div>
+        </div>
+
+        <!-- Overview Grid -->
+        <div class="stats-overview">
+            <div class="card">
+                <div class="card-header">
+                    <span>총 스캔 횟수</span>
+                    <i data-lucide="fingerprint" class="card-icon" size="18"></i>
+                </div>
+                <div class="card-value" id="stat-total-scans">0회</div>
+                <div class="card-footer" id="stat-total-sub">오늘 데이터 누적치</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span>출입 승인 성공률</span>
+                    <i data-lucide="shield-check" class="card-icon" size="18"></i>
+                </div>
+                <div class="card-value" id="stat-success-rate" style="color: var(--accent-green);">100%</div>
+                <div class="card-footer" id="stat-success-sub">거부 0회 발생</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span>고유 방문자 수</span>
+                    <i data-lucide="users" class="card-icon" size="18"></i>
+                </div>
+                <div class="card-value" id="stat-unique-users">0명</div>
+                <div class="card-footer" id="stat-unique-sub">중복 카드 태그 제외</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <span>주요 혼잡 시간대</span>
+                    <i data-lucide="clock" class="card-icon" size="18"></i>
+                </div>
+                <div class="card-value" id="stat-peak-time">N/A</div>
+                <div class="card-footer">출근 및 교대 시간</div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid">
+            <!-- 1. 시간별 출입 빈도 (Line Chart) -->
+            <div class="card chart-card full-chart-card">
+                <h3 class="chart-title">
+                    <i data-lucide="trending-up" size="18" style="color: var(--accent-cyan);"></i> 시간대별 출입 빈도 추이
+                </h3>
+                <div class="chart-wrapper">
+                    <canvas id="timeLineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 2. 승인 vs 거부 비율 (Doughnut Chart) -->
+            <div class="card chart-card">
+                <h3 class="chart-title">
+                    <i data-lucide="pie-chart" size="18" style="color: var(--accent-blue);"></i> 출입 승인 및 보안 거부 비율
+                </h3>
+                <div class="chart-wrapper">
+                    <canvas id="statusDoughnutChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 3. 부서별 출입 분포 (Bar Chart) -->
+            <div class="card chart-card">
+                <h3 class="chart-title">
+                    <i data-lucide="bar-chart-horizontal" size="18" style="color: var(--accent-green);"></i> 부서별 출입 건수 분포
+                </h3>
+                <div class="chart-wrapper">
+                    <canvas id="deptBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lucide 아이콘 로드
+        lucide.createIcons();
+
+        // 테마 관리
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeIcon = document.getElementById('theme-icon');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+                themeIcon.setAttribute('data-lucide', 'moon');
+            } else {
+                document.body.classList.remove('light-theme');
+                themeIcon.setAttribute('data-lucide', 'sun');
+            }
+            lucide.createIcons();
+            
+            // 차트 그리드 색상 및 폰트 변경 반영을 위해 테마 초기화 후 차트 로딩
+            updateChartThemeSettings();
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            if (body.classList.contains('light-theme')) {
+                body.classList.remove('light-theme');
+                localStorage.setItem('theme', 'dark');
+                themeIcon.setAttribute('data-lucide', 'sun');
+            } else {
+                body.classList.add('light-theme');
+                localStorage.setItem('theme', 'light');
+                themeIcon.setAttribute('data-lucide', 'moon');
+            }
+            lucide.createIcons();
+            
+            // 차트 스타일링 갱신
+            updateChartThemeSettings();
+            if (timeChart) timeChart.destroy();
+            if (statusChart) statusChart.destroy();
+            if (deptChart) deptChart.destroy();
+            
+            initChartsAndLoad('today');
+        }
+
+        // 차트 설정 변수
+        let gridColor = 'rgba(255, 255, 255, 0.05)';
+        let fontColor = '#9ca3af';
+
+        function updateChartThemeSettings() {
+            if (document.body.classList.contains('light-theme')) {
+                gridColor = 'rgba(0, 0, 0, 0.06)';
+                fontColor = '#4b5563';
+            } else {
+                gridColor = 'rgba(255, 255, 255, 0.05)';
+                fontColor = '#9ca3af';
+            }
+        }
+
+        // 차트용 글로벌 변수 객체
+        let timeChart = null;
+        let statusChart = null;
+        let deptChart = null;
+
+        // 차트 공통 옵션
+        function getCommonOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: fontColor,
+                            font: { family: 'Outfit', size: 12 }
+                        }
+                    }
+                }
+            };
+        }
+
+        // 데이터 로드 및 차트 적용 함수
+        function initChartsAndLoad(filterKey) {
+            fetch(`/api_get_stats.php?filter=${filterKey}`)
+                .then(res => res.json())
+                .then(data => {
+                    // 요약 카드 값 업데이트
+                    document.getElementById('stat-total-scans').innerText = data.totalScans;
+                    document.getElementById('stat-success-rate').innerText = data.successRate;
+                    document.getElementById('stat-success-sub').innerText = data.successSub;
+                    document.getElementById('stat-unique-users').innerText = data.uniqueUsers;
+                    document.getElementById('stat-peak-time').innerText = data.peakTime;
+
+                    if (filterKey === 'today') {
+                        document.getElementById('stat-total-sub').innerText = "오늘 데이터 누적치";
+                        document.getElementById('stat-unique-sub').innerText = "중복 카드 태그 제외";
+                    } else if (filterKey === 'week') {
+                        document.getElementById('stat-total-sub').innerText = "지난 7일간 총합";
+                        document.getElementById('stat-unique-sub').innerText = "지난 7일 고유 출입원";
+                    } else {
+                        document.getElementById('stat-total-sub').innerText = "지난 30일간 총합";
+                        document.getElementById('stat-unique-sub').innerText = "지난 30일 고유 출입원";
+                    }
+
+                    // 1. 시간대별 차트 (Line)
+                    const ctx1 = document.getElementById('timeLineChart').getContext('2d');
+                    timeChart = new Chart(ctx1, {
+                        type: 'line',
+                        data: {
+                            labels: data.timeLabels,
+                            datasets: [{
+                                label: '출입 건수',
+                                data: data.timeData,
+                                borderColor: '#00f2fe',
+                                backgroundColor: document.body.classList.contains('light-theme') ? 'rgba(0, 242, 254, 0.05)' : 'rgba(0, 242, 254, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#00f2fe',
+                                pointBorderColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#060913',
+                                pointHoverRadius: 7
+                            }]
+                        },
+                        options: {
+                            ...getCommonOptions(),
+                            scales: {
+                                x: {
+                                    grid: { color: gridColor },
+                                    ticks: { color: fontColor, font: { family: 'Outfit' } }
+                                },
+                                y: {
+                                    grid: { color: gridColor },
+                                    ticks: { color: fontColor, font: { family: 'Outfit' }, precision: 0 }
+                                }
+                            }
+                        }
+                    });
+
+                    // 2. 승인 vs 거부 비율 차트 (Doughnut)
+                    const ctx2 = document.getElementById('statusDoughnutChart').getContext('2d');
+                    statusChart = new Chart(ctx2, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['승인(Success)', '거부(Denied)'],
+                            datasets: [{
+                                data: data.statusData,
+                                backgroundColor: ['#10b981', '#ef4444'],
+                                borderColor: document.body.classList.contains('light-theme') ? '#ffffff' : '#0d1426',
+                                borderWidth: 4,
+                                hoverOffset: 10
+                            }]
+                        },
+                        options: {
+                            ...getCommonOptions(),
+                            cutout: '65%'
+                        }
+                    });
+
+                    // 3. 부서별 차트 (Bar)
+                    const ctx3 = document.getElementById('deptBarChart').getContext('2d');
+                    deptChart = new Chart(ctx3, {
+                        type: 'bar',
+                        data: {
+                            labels: data.deptLabels,
+                            datasets: [{
+                                label: '출입 건수',
+                                data: data.deptData,
+                                backgroundColor: 'rgba(79, 172, 254, 0.8)',
+                                borderColor: '#4facfe',
+                                borderWidth: 1,
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            ...getCommonOptions(),
+                            scales: {
+                                x: {
+                                    grid: { color: gridColor },
+                                    ticks: { color: fontColor, font: { family: 'Outfit' } }
+                                },
+                                y: {
+                                    grid: { color: gridColor },
+                                    ticks: { color: fontColor, font: { family: 'Outfit' }, precision: 0 }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(err => {
+                    console.error("API error loading stats: ", err);
+                });
+        }
+
+        // 필터 변경 시 데이터 갱신
+        function updateFilter(filterKey, element) {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+
+            if (timeChart) timeChart.destroy();
+            if (statusChart) statusChart.destroy();
+            if (deptChart) deptChart.destroy();
+
+            initChartsAndLoad(filterKey);
+        }
+
+        window.onload = function() {
+            initTheme();
+            initChartsAndLoad('today');
+        };
+    </script>
+</body>
+</html>

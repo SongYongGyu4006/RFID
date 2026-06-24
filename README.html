@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHER NFC - 개발자 가이드 (Developer Guide)</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #f9fafb;
+            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --accent-color: #2563eb;
+            --accent-glow: rgba(37, 99, 235, 0.1);
+            --code-bg: #f3f4f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0b0f19;
+                --sidebar-bg: #111827;
+                --card-bg: #1f2937;
+                --border-color: #374151;
+                --text-primary: #f9fafb;
+                --text-secondary: #d1d5db;
+                --text-muted: #6b7280;
+                --accent-color: #3b82f6;
+                --accent-glow: rgba(59, 130, 246, 0.15);
+                --code-bg: #111827;
+                --success-color: #34d399;
+                --warning-color: #fbbf24;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Sidebar navigation */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .brand-icon {
+            color: var(--accent-color);
+        }
+
+        .brand-name {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .nav-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1.5px;
+            margin-bottom: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-color);
+            background-color: var(--accent-glow);
+        }
+
+        /* Main content area */
+        .main-content {
+            margin-left: 280px;
+            flex-grow: 1;
+            padding: 3rem 4rem;
+            max-width: 960px;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, var(--text-primary) 60%, var(--accent-color) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        section {
+            margin-bottom: 3.5rem;
+            scroll-margin-top: 3rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Grid layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--code-bg);
+            font-weight: 600;
+        }
+
+        /* Code block styles */
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        pre code {
+            padding: 0;
+            background-color: transparent;
+        }
+
+        /* Callout alert boxes */
+        .callout {
+            border-left: 4px solid var(--accent-color);
+            background-color: var(--accent-glow);
+            padding: 1rem 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        .callout-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .callout-content {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .callout-success {
+            border-left-color: var(--success-color);
+            background-color: rgba(16, 185, 129, 0.05);
+        }
+        .callout-success .callout-title {
+            color: var(--success-color);
+        }
+
+        /* Flow diagram placeholder */
+        .diagram {
+            background-color: var(--code-bg);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin: 1.5rem 0;
+            color: var(--text-secondary);
+            white-space: pre;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i data-lucide="terminal" class="brand-icon" size="24"></i>
+            <span class="brand-name">AETHER NFC</span>
+        </div>
+        
+        <div class="nav-title">프로젝트 가이드</div>
+        <ul class="nav-list">
+            <li><a href="#overview" class="nav-link"><i data-lucide="info" size="16"></i>개요 및 아키텍처</a></li>
+            <li><a href="#hardware" class="nav-link"><i data-lucide="cpu" size="16"></i>하드웨어 구성</a></li>
+            <li><a href="#backend" class="nav-link"><i data-lucide="database" size="16"></i>백엔드 API 규격</a></li>
+            <li><a href="#dashboard" class="nav-link"><i data-lucide="layout" size="16"></i>웹 대시보드</a></li>
+            <li><a href="#firmware" class="nav-link"><i data-lucide="code-2" size="16"></i>디바이스 펌웨어</a></li>
+            <li><a href="#test" class="nav-link"><i data-lucide="clipboard-check" size="16"></i>테스트 방법</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <h1>AETHER NFC System Developer Guide</h1>
+        <p class="subtitle">ESP8266 + PN532 RFID 기반 실시간 출입통제 및 모니터링 시스템 개발자 매뉴얼</p>
+
+        <!-- Section: Overview -->
+        <section id="overview">
+            <h2><i data-lucide="info" size="20" class="brand-icon"></i> 1. 개요 및 시스템 아키텍처</h2>
+            <p>
+                본 프로젝트는 임베디드 디바이스(ESP8266)에서 RFID 카드를 실시간으로 인식하고, 원격 AWS 클라우드 웹 서버에 전송하여 데이터베이스(MySQL) 조회 결과를 바탕으로 출입 승인/거부 여부를 결정하는 <strong>클라우드 연동형 스마트 도어록 모니터링 시스템</strong>입니다.
+            </p>
+            
+            <div class="diagram">
++------------------+             HTTP POST             +----------------------+
+|  ESP8266 Device  |  =============================>   |   AWS Web Server     |
+|                  |                                   |  (Apache + PHP 8.5)  |
+|  - PN532 (I2C)   |  <=============================   |                      |
+|  - OLED Display  |          JSON Response            |   - /api_scan.php    |
+|  - Buzzer (D7)   |                                   |   - /api_register.php|
++------------------+                                   +-----------+----------+
+                                                                   |
+                                                                   | SQL Query
+                                                                   v
+                                                       +----------------------+
+                                                       |     MySQL/MariaDB    |
+                                                       |   - Table: users     |
+                                                       |   - Table: scans     |
+                                                       +----------------------+
+            </div>
+        </section>
+
+        <!-- Section: Hardware -->
+        <section id="hardware">
+            <h2><i data-lucide="cpu" size="20" class="brand-icon"></i> 2. 하드웨어 구성 및 핀 매핑</h2>
+            <p>
+                ESP8266 NodeMCU v2 보드를 메인 컨트롤러로 사용하며, OLED 디스플레이와 PN532 RFID 리더기는 I2C 버스를 공유하여 병렬 연결됩니다.
+            </p>
+
+            <h3>핀 연결 테이블</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>기기 핀 (Peripheral)</th>
+                        <th>ESP8266 Pin</th>
+                        <th>GPIO</th>
+                        <th>비고 (Description)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>SSD1306 OLED SDA</strong> / <strong>PN532 SDA</strong></td>
+                        <td>D5</td>
+                        <td>GPIO 14</td>
+                        <td>I2C Data (병렬 공유)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>SSD1306 OLED SCL</strong> / <strong>PN532 SCL</strong></td>
+                        <td>D6</td>
+                        <td>GPIO 12</td>
+                        <td>I2C Clock (병렬 공유)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Passive Buzzer +</strong></td>
+                        <td>D7</td>
+                        <td>GPIO 13</td>
+                        <td>PWM 오디오 출력 핀</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PN532 IRQ</strong></td>
+                        <td>D1</td>
+                        <td>GPIO 5</td>
+                        <td>소프트웨어 I2C 더미 핀 (미연결 무방)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PN532 RESET</strong></td>
+                        <td>D2</td>
+                        <td>GPIO 4</td>
+                        <td>소프트웨어 I2C 더미 핀 (미연결 무방)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout">
+                <div class="callout-title">PN532 딥스위치 중요 설정 (I2C 모드)</div>
+                <div class="callout-content">
+                    PN532 모듈을 I2C 통신으로 연결하기 위해 보드 상의 DIP 스위치를 반드시 <strong>SEL0: ON (1)</strong>, <strong>SEL1: OFF (0)</strong> 상태로 맞춰야 정상 초기화됩니다.
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Backend API -->
+        <section id="backend">
+            <h2><i data-lucide="database" size="20" class="brand-icon"></i> 3. 백엔드 API 규격</h2>
+            <p>
+                AWS 클라우드 서버의 데이터베이스 연결 환경과 배포된 REST API 엔드포인트 세부 정보입니다.
+            </p>
+
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <h3 style="margin-top:0;">데이터베이스 연결 정보</h3>
+                <p style="font-size:0.9rem; margin-bottom:0;">
+                    • <strong>DB 종류</strong>: MariaDB 10.11.14 (Debian 12)<br>
+                    • <strong>접속 계정</strong>: <code>rfid_user</code> / 패스워드: <code>rfid_password123</code><br>
+                    • <strong>데이터베이스명</strong>: <code>rfid_system</code>
+                </p>
+            </div>
+
+            <h3>핵심 API 목록</h3>
+            
+            <h4>1. 카드 스캔 검증 및 로깅 (<code>/api_scan.php</code>)</h4>
+            <p>ESP8266 또는 시뮬레이터에서 카드가 태깅되었을 때 호출하는 엔드포인트입니다.</p>
+            <pre><code>// Request (POST, JSON)
+{
+  "uid": "4A E1 8B 2F"
+}
+
+// Response (JSON)
+{
+  "success": true,
+  "uid": "4A E1 8B 2F",
+  "access": true,
+  "name": "정재우",
+  "role": "개발팀 / 과장"
+}</code></pre>
+
+            <h4>2. 신규 사용자 등록 (<code>/api_register.php</code>)</h4>
+            <p>미등록 카드를 소속, 이름, 전화번호를 매핑하여 DB에 등록합니다.</p>
+            <pre><code>// Request (POST, JSON)
+{
+  "uid": "FF 3D E4 78",
+  "name": "홍길동",
+  "role": "기술팀 / 대리",
+  "phone": "010-1234-5678"
+}</code></pre>
+
+            <h4>3. 출입 통계 데이터 반환 (<code>/api_get_stats.php</code>)</h4>
+            <p>필터(<code>filter=today|week|month</code>)에 따라 통계 데이터를 가공하여 반환합니다.</p>
+
+            <h4>4. CSV 다운로드 내보내기 (<code>/api_export_csv.php</code>)</h4>
+            <p>GET 호출 시 엑셀과 한글이 깨지지 않도록 UTF-8 BOM 처리가 적용된 출입 기록 CSV 파일을 즉시 다운로드 파일 스트림으로 반환합니다.</p>
+        </section>
+
+        <!-- Section: Web Dashboard -->
+        <section id="dashboard">
+            <h2><i data-lucide="layout" size="20" class="brand-icon"></i> 4. 웹 대시보드 & 통계 분석 페이지</h2>
+            <p>
+                웹 서버 루트 디렉토리(<code>/var/www/html/</code>)에 퍼블리싱된 대시보드와 통계 웹 기능의 상세 내역입니다.
+            </p>
+            
+            <div class="grid-2">
+                <div class="card">
+                    <h3 style="margin-top:0;"><i data-lucide="settings-2" size="18" style="color: var(--accent-color);"></i> 메인 대시보드 (index.html)</h3>
+                    <p style="font-size:0.85rem; margin-bottom:0;">
+                        • <strong>실시간 모니터링</strong>: 3초 간격으로 DB 신규 로그 자동 갱신.<br>
+                        • <strong>자동 팝업 연동</strong>: 실물 미등록 카드 감지 시, <strong>카드 UID 필드가 편집 가능한 상태</strong>로 신규 등록 팝업 자동 활성화.<br>
+                        • <strong>수동/시뮬레이션 지원</strong>: 가상 스캔 시뮬레이터 제공.<br>
+                        • <strong>테마 전환</strong>: 다크/라이트 테마 원클릭 스위치 제공 (설정 영구 보존).
+                    </p>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top:0;"><i data-lucide="trending-up" size="18" style="color: var(--success-color);"></i> 통계 분석 (stats.html)</h3>
+                    <p style="font-size:0.85rem; margin-bottom:0;">
+                        • <strong>Chart.js 연동</strong>: 시간대별 트래픽 추이(Line), 승인/거부 비중(Doughnut), 부서별 접속량(Bar) 차트 구성.<br>
+                        • <strong>반응형 갱신</strong>: 기간 필터(오늘, 7일, 30일) 연동에 따라 차트 데이터가 애니메이션과 함께 동적 로딩.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Firmware -->
+        <section id="firmware">
+            <h2><i data-lucide="code-2" size="20" class="brand-icon"></i> 5. 디바이스 펌웨어 (RfidSystem.ino)</h2>
+            <p>
+                ESP8266에서 돌아가는 통합 펌웨어 소스파일([RfidSystem.ino](file:///c:/Users/SW중심대학사업단/Desktop/AWS/RfidSystem/RfidSystem.ino))의 주요 로직 설명입니다.
+            </p>
+            
+            <h3>동작 로직 상세</h3>
+            <p>
+                • <strong>NTP 시계 기능</strong>: 와이파이 연결 성공 후, 동기화 서버를 통해 현지 시간(UTC+9)을 상시 유지하고 OLED에 시계 화면을 뿌려줍니다.<br>
+                • <strong>오디오 피드백 (Buzzer)</strong>:
+            </p>
+            <ul>
+                <li style="margin-left: 1.5rem; margin-bottom: 0.3rem;"><strong>부팅음</strong>: 도-미-솔 상행 3도 화음 연주</li>
+                <li style="margin-left: 1.5rem; margin-bottom: 0.3rem;"><strong>태그 확인음</strong>: <u>단일 고음 비프 한 번("삑-", 80ms)</u>으로 간결하게 처리하여 거부음과 혼동되는 문제를 완전히 수정하였습니다.</li>
+                <li style="margin-left: 1.5rem; margin-bottom: 0.3rem;"><strong>승인 성공음</strong>: 도-미-솔 상행 빠른 멜로디 재생</li>
+                <li style="margin-left: 1.5rem; margin-bottom: 0.3rem;"><strong>거부 경고음</strong>: 150Hz 저주파 웅-음 재생</li>
+            </ul>
+        </pre>
+        </section>
+
+        <!-- Section: Test -->
+        <section id="test">
+            <h2><i data-lucide="clipboard-check" size="20" class="brand-icon"></i> 6. 전체 엔드투엔드(End-to-End) 테스트 방법</h2>
+            
+            <div class="callout callout-success">
+                <div class="callout-title">성공적인 테스트 체크리스트</div>
+                <div class="callout-content">
+                    1. <strong>하드웨어 배선</strong> 및 PN532 딥 스위치 상태를 확인합니다.<br>
+                    2. 기기가 켜지면 <strong>부팅 멜로디</strong>가 나오는지 확인합니다.<br>
+                    3. 와이파이가 정상 연결되면 화면에 <strong>디지털 시계</strong>가 동기화되어 표기됩니다.<br>
+                    4. 등록된 샘플 카드(예: <code>4A E1 8B 2F</code>)를 접촉하여 <strong>승인 멜로디</strong>와 함께 OLED에 본인 정보가 뜨는지 확인합니다.<br>
+                    5. 미등록 카드를 접촉하면 <strong>거부 경고음</strong>이 울리며, 동시에 대시보드 웹 브라우저 화면에 <strong>신규 사용자 등록 팝업</strong>이 UID가 채워진 채로 팝업됩니다. 등록을 마치면 이후 동일 카드로 승인 처리가 가능해집니다.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Lucide Icons Render
+        lucide.createIcons();
+    </script>
+</body>
+</html>

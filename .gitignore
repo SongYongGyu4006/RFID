@@ -1,0 +1,13 @@
+# Sensitive files
+*.pem
+AWS_info.txt
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Arduino build artifacts (if any)
+build/
+*.hex
+*.elf
+*.bin
